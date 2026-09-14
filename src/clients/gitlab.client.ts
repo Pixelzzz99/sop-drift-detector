@@ -13,7 +13,7 @@ export interface MergeRequest {
 
 export interface FileDiff {
   oldPath: string;
-  nePath: string;
+  newPath: string;
   diff: string;
   isNew: boolean;
   isDeleted: boolean;
