@@ -2,6 +2,15 @@ import * as fs from "fs";
 import * as path from "path";
 import { ReportEntity } from "..";
 
+function escapeHtml(value: string): string {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export class HtmlReporter {
   generate(entries: ReportEntity[], outputDir: string = "reports"): string {
     const date = new Date().toISOString().split("T")[0];
@@ -109,7 +118,7 @@ export class HtmlReporter {
             .map(
               (mr) => `
         <div>
-            <a class="mr-link" href="${mr.webUrl}" target="_blank">🔀 ${mr.title}</a>
+            <a class="mr-link" href="${escapeHtml(mr.webUrl)}" target="_blank">🔀 ${escapeHtml(mr.title)}</a>
             <div class="mr-meta">Смержен: ${this.formatDate(mr.mergedAt)}</div>
           </div>`,
             )
@@ -119,9 +128,9 @@ export class HtmlReporter {
     const analysisSection = entry.analysis
       ? `<div class="analysis-box">
           <div class="label">Что изменилось</div>
-          <div>${entry.analysis.summary}</div>
+          <div>${escapeHtml(entry.analysis.summary)}</div>
           <div class="keywords">
-            ${entry.analysis.keywords.map((k) => `<span class="keyword">${k}</span>`).join("")}
+            ${entry.analysis.keywords.map((k) => `<span class="keyword">${escapeHtml(k)}</span>`).join("")}
           </div>
         </div>`
       : "";
@@ -134,7 +143,7 @@ export class HtmlReporter {
              (mp) => `
           <div class="page-item ${mp.isDrifted ? "drifted" : "ok"}">
             <div class="page-name">
-              <a href="${mp.page.webUrl}" target="_blank">${mp.page.title}</a>
+              <a href="${escapeHtml(mp.page.webUrl)}" target="_blank">${escapeHtml(mp.page.title)}</a>
             </div>
             <div class="page-meta">
               <span class="days">обновлена ${mp.daysSinceUpdate} дн. назад</span>
@@ -150,8 +159,8 @@ export class HtmlReporter {
     return `
     <div class="entry">
       <div class="entry-header">
-        <span class="issue-key">${entry.issue.key}</span>
-        <span class="issue-summary">${entry.issue.summary}</span>
+        <span class="issue-key">${escapeHtml(entry.issue.key)}</span>
+        <span class="issue-summary">${escapeHtml(entry.issue.summary)}</span>
       </div>
       <div class="entry-body">
         ${mrSection}

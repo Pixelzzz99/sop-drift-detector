@@ -1,8 +1,13 @@
 {
   "name": "sop-drift-detector",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
     "axios": "^1.20.0",
@@ -10,6 +15,6 @@
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
-    "typescript": "^7.0.2"
+    "typescript": "5.9.3"
   }
 }

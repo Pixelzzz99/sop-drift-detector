@@ -1,3 +1,5 @@
 .env
 *.docx
 node_modules/
+dist/
+reports/
