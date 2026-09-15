@@ -20,7 +20,7 @@ export class Matcher {
     const results: MatchedPage[] = [];
 
     for (const page of pages) {
-      const score = this.scoreMatch(analysis.keywords, page.title);
+      const score = this.scoreMatch(analysis.keywords, page);
       if (score === 0) continue;
 
       const lastModified = new Date(page.lastModified);
@@ -33,7 +33,7 @@ export class Matcher {
       results.push({
         page,
         score,
-        matchedKeywords: this.getMatchedKeywords(analysis.keywords, page.title),
+        matchedKeywords: this.getMatchedKeywords(analysis.keywords, page),
         daysSinceUpdate,
         isDrifted,
       });
@@ -42,8 +42,8 @@ export class Matcher {
     return results.sort((a, b) => b.score - a.score).slice(0, 5);
   }
 
-  private scoreMatch(keywords: string[], pageTitle: string): number {
-    const title = pageTitle.toLowerCase();
+  private scoreMatch(keywords: string[], page: ConfluencePage): number {
+    const title = page.title.toLowerCase();
     let score = 0;
 
     for (const keyword of keywords) {
@@ -52,6 +52,21 @@ export class Matcher {
       if (title.includes(kw)) {
         score += kw.length > 5 ? 3 : 1;
       } else if (this.partialMatch(kw, title)) {
+        score += 1;
+      }
+    }
+
+    score += this.scoreContentMatch(keywords, page.content);
+
+    return score;
+  }
+
+  private scoreContentMatch(keywords: string[], content: string): number {
+    const text = content.toLowerCase();
+    let score = 0;
+
+    for (const keyword of keywords) {
+      if (text.includes(keyword.toLowerCase())) {
         score += 1;
       }
     }
@@ -66,8 +81,12 @@ export class Matcher {
     return title.includes(root);
   }
 
-  private getMatchedKeywords(keywords: string[], pageTitle: string): string[] {
-    const title = pageTitle.toLowerCase();
-    return keywords.filter((kw) => title.includes(kw.toLowerCase()));
+  private getMatchedKeywords(keywords: string[], page: ConfluencePage): string[] {
+    const title = page.title.toLowerCase();
+    const content = page.content.toLowerCase();
+    return keywords.filter((kw) => {
+      const lower = kw.toLowerCase();
+      return title.includes(lower) || content.includes(lower);
+    });
   }
 }

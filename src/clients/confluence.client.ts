@@ -8,6 +8,7 @@ export interface ConfluencePage {
   version: number;
   webUrl: string;
   spaceKey: string;
+  content: string;
 }
 
 export class ConfluenceClient {
@@ -48,7 +49,7 @@ export class ConfluenceClient {
             {
                 auth: this.auth,
                 params: {
-                    expand: 'version',
+                    expand: 'version,body.storage',
                     limit,
                     start,
                 }
@@ -65,6 +66,7 @@ export class ConfluenceClient {
                 version: page.version?.number || 0,
                 webUrl: `${this.baseUrl}${page._links?.webui || ''}`,
                 spaceKey: page.space?.key || 'Products',
+                content: this.stripHtml(page.body?.storage?.value || '').slice(0, 5000),
             })
 
             await this.fetchPagesRecursively(page.id, result, depth + 1);
@@ -73,5 +75,18 @@ export class ConfluenceClient {
         start += size;
         if(size < limit) break;
     }
+  }
+
+  private stripHtml(html: string): string {
+    return html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }
