@@ -22,7 +22,7 @@ export interface FileDiff {
 export class GitLabClient {
   private readonly headers: Record<string, string>;
   private readonly baseUrl: string;
-  private readonly projectId: string;
+  private readonly projectId: number;
 
   constructor() {
     this.baseUrl = config.gitlab.url;
@@ -46,7 +46,7 @@ export class GitLabClient {
         },
       );
 
-      return response.data.filter((mr: any) => ({
+      return response.data.map((mr: any) => ({
         id: mr.id,
         iid: mr.iid,
         title: mr.title,

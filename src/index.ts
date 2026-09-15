@@ -3,6 +3,7 @@ import { GitLabClient, MergeRequest } from "./clients/gitlab.client";
 import { ConfluenceClient } from "./clients/confluence.client";
 import { DiffAnalysis, DiffAnalyzer } from "./analyzers/diff.analyzer";
 import { MatchedPage, Matcher } from "./analyzers/matcher";
+import { HtmlReporter } from "./reporters/html.reporter";
 
 export interface ReportEntity {
   issue: JiraIssue;
@@ -21,6 +22,7 @@ async function main() {
   const confluence = new ConfluenceClient();
   const analyzer = new DiffAnalyzer();
   const matcher = new Matcher();
+  const reporter = new HtmlReporter();
 
   const issues = await jira.getRecentlyClosedIssues();
   if (issues.length === 0) {

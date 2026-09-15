@@ -29,7 +29,6 @@ export class JiraClient {
     const jql = [
       `project = ${config.jira.projectKey}`,
       `status = Test`,
-      ,
       `updated >= -${config.daysBack}d`,
     ].join(" AND ");
 
