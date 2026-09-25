@@ -12,14 +12,13 @@ export interface ConfluencePage {
 }
 
 export class ConfluenceClient {
-  private readonly auth: { username: string; password: string };
+  private readonly headers: Record<string, string>;
   private readonly baseUrl: string;
 
   constructor() {
     this.baseUrl = config.confluence.url;
-    this.auth = {
-      username: config.confluence.username,
-      password: config.confluence.apiToken,
+    this.headers = {
+      Authorization: `Bearer ${config.confluence.apiToken}`,
     };
   }
 
@@ -47,7 +46,7 @@ export class ConfluenceClient {
         const response = await axios.get(
             `${this.baseUrl}/rest/api/content/${pageId}/child/page`,
             {
-                auth: this.auth,
+                headers: this.headers,
                 params: {
                     expand: 'version,body.storage',
                     limit,

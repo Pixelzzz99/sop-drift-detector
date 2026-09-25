@@ -133,6 +133,12 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Error in main execution:", err);
+  if (err?.isAxiosError) {
+    console.error(
+      `Error in main execution: ${err.message} (status: ${err.response?.status ?? "n/a"}, url: ${err.config?.url ?? "n/a"})`,
+    );
+  } else {
+    console.error("Error in main execution:", err);
+  }
   process.exit(1);
 });

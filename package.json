@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js"
+    "dev": "tsc && node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
@@ -15,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
   }
 }

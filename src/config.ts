@@ -10,7 +10,6 @@ function required(key: string): string {
 export const config = {
     jira: {
         url: required('JIRA_URL'),
-        username: required('JIRA_USERNAME'),
         apiToken: required("JIRA_TOKEN"),
         projectKey: process.env.JIRA_PROJECT_KEY || "MYCLICK",
     },
@@ -21,7 +20,6 @@ export const config = {
     },
     confluence: {
         url: required("CONFLUENCE_URL"),
-        username: required("CONFLUENCE_USERNAME"),
         apiToken: required("CONFLUENCE_TOKEN"),
         rootPageId: required("CONFLUENCE_ROOT_PAGE_ID"),
     },
