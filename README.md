@@ -73,21 +73,21 @@ cp .env.example .env
 
 Все переменные обязательны, кроме отмеченных как опциональные (см. `src/config.ts`).
 
-| Переменная               | Описание                                              |
-|---------------------------|--------------------------------------------------------|
-| `JIRA_URL`                 | Базовый URL Jira                                        |
-| `JIRA_USERNAME`             | Логин для Basic Auth                                    |
-| `JIRA_TOKEN`                | API-токен / Personal Access Token                       |
-| `JIRA_PROJECT_KEY`          | Ключ проекта (опционально, по умолчанию `MYCLICK`)      |
-| `GITLAB_URL`                | Базовый URL GitLab                                      |
-| `GITLAB_TOKEN`              | Private Token с доступом к проекту                      |
-| `GITLAB_PROJECT_ID`         | ID проекта в GitLab                                     |
-| `CONFLUENCE_URL`            | Базовый URL Confluence                                  |
-| `CONFLUENCE_USERNAME`       | Логин для Basic Auth                                    |
-| `CONFLUENCE_TOKEN`          | API-токен / Personal Access Token                       |
-| `CONFLUENCE_ROOT_PAGE_ID`   | ID корневой страницы, под которой ищутся дочерние       |
-| `ANTHROPIC_API_KEY`         | Ключ Anthropic API для LLM-анализа                      |
-| `DAYS_BACK`                 | За сколько дней назад искать задачи (опционально, по умолчанию `7`) |
+| Переменная                | Описание                                                            |
+| ------------------------- | ------------------------------------------------------------------- |
+| `JIRA_URL`                | Базовый URL Jira                                                    |
+| `JIRA_USERNAME`           | Логин для Basic Auth                                                |
+| `JIRA_TOKEN`              | API-токен / Personal Access Token                                   |
+| `JIRA_PROJECT_KEY`        | Ключ проекта (опционально, по умолчанию `MYCLICK`)                  |
+| `GITLAB_URL`              | Базовый URL GitLab                                                  |
+| `GITLAB_TOKEN`            | Private Token с доступом к проекту                                  |
+| `GITLAB_PROJECT_ID`       | ID проекта в GitLab                                                 |
+| `CONFLUENCE_URL`          | Базовый URL Confluence                                              |
+| `CONFLUENCE_USERNAME`     | Логин для Basic Auth                                                |
+| `CONFLUENCE_TOKEN`        | API-токен / Personal Access Token                                   |
+| `CONFLUENCE_ROOT_PAGE_ID` | ID корневой страницы, под которой ищутся дочерние                   |
+| `ANTHROPIC_API_KEY`       | Ключ Anthropic API для LLM-анализа                                  |
+| `DAYS_BACK`               | За сколько дней назад искать задачи (опционально, по умолчанию `7`) |
 
 ## Запуск
 
@@ -140,22 +140,26 @@ MYCLICK-456 | Изменена логика авторизации через OT
 ## Roadmap
 
 **v1.0 — MVP (текущий)**
+
 - Детекция устаревших страниц
 - HTML-отчёт
 - Ручной запуск / cron
 
 **v1.1**
+
 - Уведомления в Telegram с дайджестом
 - Настройка через `config.json` без `.env`
 - Поддержка нескольких проектов Jira
 
 **v2.0**
+
 - LLM генерирует черновик обновления страницы
 - Confluence Draft API — создание черновика на review
 - Web UI для просмотра отчётов
 - Трекинг метрик: сколько страниц было обновлено после алерта
 
 **SaaS (долгосрочно)**
+
 - Мультитенантная архитектура
 - Поддержка Notion, GitHub, Jira Cloud
 - Интеграция с Slack / Teams / Telegram

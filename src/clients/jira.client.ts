@@ -11,14 +11,13 @@ export interface JiraIssue {
 }
 
 export class JiraClient {
-  private readonly auth: { username: string; password: string };
+  private readonly headers: Record<string, string>;
   private readonly baseUrl: string;
 
   constructor() {
     this.baseUrl = config.jira.url;
-    this.auth = {
-      username: config.jira.username,
-      password: config.jira.apiToken,
+    this.headers = {
+      Authorization: `Bearer ${config.jira.apiToken}`,
     };
   }
 
@@ -40,7 +39,7 @@ export class JiraClient {
 
     while (true) {
       const response = await axios.get(`${this.baseUrl}/rest/api/2/search`, {
-        auth: this.auth,
+        headers: this.headers,
         params: {
           jql,
           startAt,
