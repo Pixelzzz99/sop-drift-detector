@@ -71,7 +71,7 @@ export class GitLabClient {
         .filter((d: any) => !this.isBinaryOrLockFile(d.new_path))
         .slice(0, 15)
         .map((d: any) => ({
-          oldPath: d.oldPath,
+          oldPath: d.old_path,
           newPath: d.new_path,
           diff: (d.diff || "").slice(0, 10000),
           isNew: d.new_file,
