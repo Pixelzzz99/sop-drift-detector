@@ -17,31 +17,40 @@ export class Matcher {
     pages: ConfluencePage[],
     mergedAt: string,
   ): MatchedPage[] {
-    const ONE_DAY = 1000 * 60 * 60 * 24;
-    const mergeDate = new Date(mergedAt);
     const results: MatchedPage[] = [];
 
     for (const page of pages) {
       const score = this.scoreMatch(analysis.keywords, page);
       if (score < this.MIN_SCORE) continue;
 
-      const lastModified = new Date(page.lastModified);
-      const daysSinceUpdate = Math.floor(
-        (Date.now() - lastModified.getTime()) / ONE_DAY,
+      results.push(
+        this.buildMatchedPage(
+          page,
+          mergedAt,
+          score,
+          this.getMatchedKeywords(analysis.keywords, page),
+        ),
       );
-
-      const isDrifted = lastModified < mergeDate || daysSinceUpdate > 14;
-
-      results.push({
-        page,
-        score,
-        matchedKeywords: this.getMatchedKeywords(analysis.keywords, page),
-        daysSinceUpdate,
-        isDrifted,
-      });
     }
 
     return results.sort((a, b) => b.score - a.score).slice(0, 3);
+  }
+
+  buildMatchedPage(
+    page: ConfluencePage,
+    mergedAt: string,
+    score: number,
+    matchedKeywords: string[],
+  ): MatchedPage {
+    const ONE_DAY = 1000 * 60 * 60 * 24;
+    const mergeDate = new Date(mergedAt);
+    const lastModified = new Date(page.lastModified);
+    const daysSinceUpdate = Math.floor(
+      (Date.now() - lastModified.getTime()) / ONE_DAY,
+    );
+    const isDrifted = lastModified < mergeDate || daysSinceUpdate > 14;
+
+    return { page, score, matchedKeywords, daysSinceUpdate, isDrifted };
   }
 
   private scoreMatch(keywords: string[], page: ConfluencePage): number {

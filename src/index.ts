@@ -1,8 +1,9 @@
 import { JiraClient, JiraIssue } from "./clients/jira.client";
-import { GitLabClient, MergeRequest } from "./clients/gitlab.client";
-import { ConfluenceClient } from "./clients/confluence.client";
+import { GitLabClient, MergeRequest, FileDiff } from "./clients/gitlab.client";
+import { ConfluenceClient, ConfluencePage } from "./clients/confluence.client";
 import { DiffAnalysis, DiffAnalyzer } from "./analyzers/diff.analyzer";
 import { MatchedPage, Matcher } from "./analyzers/matcher";
+import { SemanticMatcher } from "./analyzers/semantic.matcher";
 import { HtmlReporter } from "./reporters/html.reporter";
 
 export interface ReportEntity {
@@ -16,12 +17,31 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function findRelatedPages(
+  matcher: Matcher,
+  semanticMatcher: SemanticMatcher,
+  analysis: DiffAnalysis,
+  confluencePages: ConfluencePage[],
+  mergedAt: string,
+  issueKey: string,
+): Promise<MatchedPage[]> {
+  try {
+    return await semanticMatcher.findRelatedPages(analysis, confluencePages, mergedAt);
+  } catch (err) {
+    console.warn(
+      ` -> Semantic matching failed for ${issueKey}, falling back to keyword matcher`,
+    );
+    return matcher.findRelatedPages(analysis, confluencePages, mergedAt);
+  }
+}
+
 async function main() {
   const jira = new JiraClient();
   const gitlab = new GitLabClient();
   const confluence = new ConfluenceClient();
   const analyzer = new DiffAnalyzer();
   const matcher = new Matcher();
+  const semanticMatcher = new SemanticMatcher();
   const reporter = new HtmlReporter();
 
   const issues = await jira.getRecentlyClosedIssues();
@@ -47,38 +67,42 @@ async function main() {
     let matchedPages: MatchedPage[] = [];
 
     if (mergeRequests.length > 0) {
-      const mr = mergeRequests[0]; //get first MR
-
-      // Got first diff
-      const diffs = await gitlab.getMRDiffs(mr.iid);
-      console.log(` -> MR has ${diffs.length} changed fileds`);
-
-      // Analyze from LLM
-      if (diffs.length > 0) {
-        analysis = await analyzer.analyze(
-          issue.key,
-          issue.summary,
-          mr.title,
-          diffs,
-        );
-
-        console.log(` -> Analysis: ${analysis.summary}`);
-        console.log(` -> Keywords: ${analysis.keywords.join(", ")}`);
-        console.log(` -> Doc impact: ${analysis.hasDocImpact}`);
-      } else {
-        analysis = await analyzer.analyze(
-          issue.key,
-          issue.summary,
-          mr.title,
-          [],
-        );
+      // Analyze every merged MR for this issue, not just the first one.
+      const allDiffs: FileDiff[] = [];
+      for (const mr of mergeRequests) {
+        const diffs = await gitlab.getMRDiffs(mr.iid);
+        allDiffs.push(...diffs);
       }
+      console.log(
+        ` -> ${mergeRequests.length} MR(s), ${allDiffs.length} changed file(s) total`,
+      );
+
+      const combinedTitle = mergeRequests.map((mr) => mr.title).join("; ");
+      analysis = await analyzer.analyze(
+        issue.key,
+        issue.summary,
+        combinedTitle,
+        allDiffs,
+      );
+
+      console.log(` -> Analysis: ${analysis.summary}`);
+      console.log(` -> Keywords: ${analysis.keywords.join(", ")}`);
+      console.log(` -> Doc impact: ${analysis.hasDocImpact}`);
 
       if (analysis.hasDocImpact) {
-        matchedPages = matcher.findRelatedPages(
+        // Use the most recent merge to decide whether docs are stale.
+        const latestMergedAt = mergeRequests.reduce(
+          (latest, mr) => (mr.mergedAt > latest ? mr.mergedAt : latest),
+          mergeRequests[0].mergedAt,
+        );
+
+        matchedPages = await findRelatedPages(
+          matcher,
+          semanticMatcher,
           analysis,
           confluencePages,
-          mr.mergedAt,
+          latestMergedAt,
+          issue.key,
         );
 
         const driftedCount = matchedPages.filter((p) => p.isDrifted).length;
@@ -94,11 +118,17 @@ async function main() {
         issue.summary,
         [],
       );
-      matchedPages = matcher.findRelatedPages(
-        analysis,
-        confluencePages,
-        issue.updated,
-      );
+
+      if (analysis.hasDocImpact) {
+        matchedPages = await findRelatedPages(
+          matcher,
+          semanticMatcher,
+          analysis,
+          confluencePages,
+          issue.updated,
+          issue.key,
+        );
+      }
     }
 
     entries.push({ issue, mergeRequests, analysis, matchedPages });
