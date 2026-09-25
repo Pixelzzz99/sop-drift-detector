@@ -8,6 +8,7 @@ vi.mock("../../src/config", () => ({
       url: "https://jira.example.com",
       apiToken: "jira-token",
       projectKey: "MYCLICK",
+      titlePrefix: "[Back]",
     },
     daysBack: 7,
   },
@@ -48,7 +49,7 @@ describe("JiraClient", () => {
           {
             key: "MYCLICK-1",
             fields: {
-              summary: "Fix bug",
+              summary: "[Back] Fix bug",
               status: { name: "Test" },
               updated: "2026-09-20T10:00:00.000Z",
               labels: ["backend"],
@@ -66,7 +67,7 @@ describe("JiraClient", () => {
     expect(issues).toEqual([
       {
         key: "MYCLICK-1",
-        summary: "Fix bug",
+        summary: "[Back] Fix bug",
         status: "Test",
         updated: "2026-09-20T10:00:00.000Z",
         labels: ["backend"],
@@ -75,13 +76,31 @@ describe("JiraClient", () => {
     ]);
   });
 
+  it("keeps only issues whose title starts with the configured prefix", async () => {
+    mockedGet.mockResolvedValueOnce({
+      data: {
+        issues: [
+          { key: "MYCLICK-1", fields: { summary: "[Back] Fix auth bug", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "MYCLICK-2", fields: { summary: "[iOS] Update onboarding screen", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "MYCLICK-3", fields: { summary: "[Front] Fix layout", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+        ],
+        total: 3,
+      },
+    });
+
+    const client = new JiraClient();
+    const issues = await client.getRecentlyClosedIssues();
+
+    expect(issues.map((i) => i.key)).toEqual(["MYCLICK-1"]);
+  });
+
   it("paginates until all issues are fetched", async () => {
     mockedGet
       .mockResolvedValueOnce({
         data: {
           issues: [
-            { key: "MYCLICK-1", fields: { summary: "A", status: { name: "Test" }, updated: "", labels: [], components: [] } },
-            { key: "MYCLICK-2", fields: { summary: "B", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+            { key: "MYCLICK-1", fields: { summary: "[Back] A", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+            { key: "MYCLICK-2", fields: { summary: "[Back] B", status: { name: "Test" }, updated: "", labels: [], components: [] } },
           ],
           total: 3,
         },
@@ -89,7 +108,7 @@ describe("JiraClient", () => {
       .mockResolvedValueOnce({
         data: {
           issues: [
-            { key: "MYCLICK-3", fields: { summary: "C", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+            { key: "MYCLICK-3", fields: { summary: "[Back] C", status: { name: "Test" }, updated: "", labels: [], components: [] } },
           ],
           total: 3,
         },

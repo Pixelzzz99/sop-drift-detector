@@ -10,6 +10,8 @@ export interface MatchedPage {
 }
 
 export class Matcher {
+  private readonly MIN_SCORE = 3;
+
   findRelatedPages(
     analysis: DiffAnalysis,
     pages: ConfluencePage[],
@@ -21,7 +23,7 @@ export class Matcher {
 
     for (const page of pages) {
       const score = this.scoreMatch(analysis.keywords, page);
-      if (score === 0) continue;
+      if (score < this.MIN_SCORE) continue;
 
       const lastModified = new Date(page.lastModified);
       const daysSinceUpdate = Math.floor(
@@ -39,7 +41,7 @@ export class Matcher {
       });
     }
 
-    return results.sort((a, b) => b.score - a.score).slice(0, 5);
+    return results.sort((a, b) => b.score - a.score).slice(0, 3);
   }
 
   private scoreMatch(keywords: string[], page: ConfluencePage): number {

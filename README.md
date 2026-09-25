@@ -16,7 +16,7 @@ MyClick Backend · Click.uz
 
 Скрипт последовательно проходит 5 этапов (`src/index.ts`):
 
-1. **Jira** (`src/clients/jira.client.ts`) — получает задачи проекта `JIRA_PROJECT_KEY` со статусом `Test`, обновлённые за последние `DAYS_BACK` дней:
+1. **Jira** (`src/clients/jira.client.ts`) — получает задачи проекта `JIRA_PROJECT_KEY` со статусом `Test`, обновлённые за последние `DAYS_BACK` дней, и оставляет только те, чей заголовок начинается с `JIRA_TITLE_PREFIX` (по умолчанию `[Back]` — только backend-задачи):
    ```
    GET /rest/api/2/search?jql=project=MYCLICK AND status=Test AND updated>=-7d
    ```
@@ -27,7 +27,7 @@ MyClick Backend · Click.uz
    ```
 3. **LLM-анализ** (`src/analyzers/diff.analyzer.ts`) — diff отправляется в Claude (`claude-haiku-4-5-20251001`), который возвращает JSON: краткое описание изменения в поведении системы, ключевые слова для поиска в документации и флаг `hasDocImpact`. Если LLM недоступен или диффов нет — используется fallback на ключевые слова из заголовка задачи и MR.
 4. **Confluence** (`src/clients/confluence.client.ts`) — рекурсивно (до 5 уровней вложенности) собирает все дочерние страницы под `CONFLUENCE_ROOT_PAGE_ID`, вместе с датой последнего обновления и текстом страницы (`body.storage`, очищенным от HTML).
-5. **Матчинг и отчёт** (`src/analyzers/matcher.ts`, `src/reporters/html.reporter.ts`) — ключевые слова сопоставляются и с заголовком, и с содержимым страницы (заголовок даёт больший вес). Страница считается устаревшей (`isDrifted`), если она не обновлялась дольше 14 дней или обновлялась раньше, чем был смержен MR. Топ-5 совпадений на задачу попадают в HTML-отчёт.
+5. **Матчинг и отчёт** (`src/analyzers/matcher.ts`, `src/reporters/html.reporter.ts`) — ключевые слова сопоставляются и с заголовком, и с содержимым страницы (заголовок даёт больший вес). Страницы со скором ниже порога релевантности (`MIN_SCORE = 3`) отбрасываются как шум. Страница считается устаревшей (`isDrifted`), если она не обновлялась дольше 14 дней или обновлялась раньше, чем был смержен MR. Топ-3 совпадения на задачу попадают в HTML-отчёт.
 
 ## Структура проекта
 
@@ -73,21 +73,20 @@ cp .env.example .env
 
 Все переменные обязательны, кроме отмеченных как опциональные (см. `src/config.ts`).
 
-| Переменная                | Описание                                                            |
-| ------------------------- | ------------------------------------------------------------------- |
-| `JIRA_URL`                | Базовый URL Jira                                                    |
-| `JIRA_USERNAME`           | Логин для Basic Auth                                                |
-| `JIRA_TOKEN`              | API-токен / Personal Access Token                                   |
-| `JIRA_PROJECT_KEY`        | Ключ проекта (опционально, по умолчанию `MYCLICK`)                  |
-| `GITLAB_URL`              | Базовый URL GitLab                                                  |
-| `GITLAB_TOKEN`            | Private Token с доступом к проекту                                  |
-| `GITLAB_PROJECT_ID`       | ID проекта в GitLab                                                 |
-| `CONFLUENCE_URL`          | Базовый URL Confluence                                              |
-| `CONFLUENCE_USERNAME`     | Логин для Basic Auth                                                |
-| `CONFLUENCE_TOKEN`        | API-токен / Personal Access Token                                   |
-| `CONFLUENCE_ROOT_PAGE_ID` | ID корневой страницы, под которой ищутся дочерние                   |
-| `ANTHROPIC_API_KEY`       | Ключ Anthropic API для LLM-анализа                                  |
-| `DAYS_BACK`               | За сколько дней назад искать задачи (опционально, по умолчанию `7`) |
+| Переменная                | Описание                                                                 |
+| ------------------------- | ------------------------------------------------------------------------- |
+| `JIRA_URL`                | Базовый URL Jira                                                          |
+| `JIRA_TOKEN`              | Personal Access Token (отправляется как `Authorization: Bearer`)          |
+| `JIRA_PROJECT_KEY`        | Ключ проекта (опционально, по умолчанию `MYCLICK`)                        |
+| `JIRA_TITLE_PREFIX`       | Обрабатывать только задачи с этим префиксом в заголовке (опционально, по умолчанию `[Back]`) |
+| `GITLAB_URL`              | Базовый URL GitLab                                                        |
+| `GITLAB_TOKEN`            | Private Token с доступом к проекту                                        |
+| `GITLAB_PROJECT_ID`       | ID проекта в GitLab                                                       |
+| `CONFLUENCE_URL`          | Базовый URL Confluence                                                    |
+| `CONFLUENCE_TOKEN`        | Personal Access Token (отправляется как `Authorization: Bearer`)          |
+| `CONFLUENCE_ROOT_PAGE_ID` | ID корневой страницы, под которой ищутся дочерние                         |
+| `ANTHROPIC_API_KEY`       | Ключ Anthropic API для LLM-анализа                                        |
+| `DAYS_BACK`               | За сколько дней назад искать задачи (опционально, по умолчанию `7`)       |
 
 ## Запуск
 

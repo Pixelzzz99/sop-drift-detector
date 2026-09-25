@@ -51,6 +51,8 @@ export class JiraClient {
       const { issues: batch, total } = response.data;
 
       for (const issue of batch) {
+        if (!issue.fields.summary.startsWith(config.jira.titlePrefix)) continue;
+
         issues.push({
           key: issue.key,
           summary: issue.fields.summary,
@@ -66,7 +68,7 @@ export class JiraClient {
       if (startAt >= total || batch.length === 0) break;
     }
 
-    console.log(`[JIRA] Found ${issues.length} closed issues`);
+    console.log(`[JIRA] Found ${issues.length} issues with prefix "${config.jira.titlePrefix}"`);
 
     return issues;
   }

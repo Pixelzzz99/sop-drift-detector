@@ -12,6 +12,7 @@ export const config = {
         url: required('JIRA_URL'),
         apiToken: required("JIRA_TOKEN"),
         projectKey: process.env.JIRA_PROJECT_KEY || "MYCLICK",
+        titlePrefix: process.env.JIRA_TITLE_PREFIX || "[Back]",
     },
     gitlab: {
         url: required("GITLAB_URL"),
