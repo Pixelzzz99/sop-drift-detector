@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { ReportEntity } from "..";
+import { config } from "../config";
 
 function escapeHtml(value: string): string {
   return String(value)
@@ -180,7 +181,7 @@ export class HtmlReporter {
   }
 
   private getDaysBack(): number {
-    return parseInt(process.env.DAYS_BACK || "?", 10);
+    return config.daysBack;
   }
 
   private countDriftedPages(entries: ReportEntity[]): number {

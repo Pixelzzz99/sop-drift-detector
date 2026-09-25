@@ -16,7 +16,7 @@ MyClick Backend · Click.uz
 
 Скрипт последовательно проходит 5 этапов (`src/index.ts`):
 
-1. **Jira** (`src/clients/jira.client.ts`) — получает задачи проекта `JIRA_PROJECT_KEY` со статусом `Test`, обновлённые за последние `DAYS_BACK` дней, и оставляет только те, чей заголовок начинается с `JIRA_TITLE_PREFIX` (по умолчанию `[Back]` — только backend-задачи):
+1. **Jira** (`src/clients/jira.client.ts`) — получает задачи проекта `jira.projectKey` (из `config.json`) со статусом `Test`, обновлённые за последние `daysBack` дней, и оставляет только те, чей заголовок начинается хотя бы с одного из `jira.titlePrefix` (по умолчанию `[Back]` — только backend-задачи):
    ```
    GET /rest/api/2/search?jql=project=MYCLICK AND status=Test AND updated>=-7d
    ```
@@ -43,12 +43,13 @@ sop-drift-detector/
 │   │   └── matcher.ts            # матчинг изменений → страниц Confluence
 │   ├── reporters/
 │   │   └── html.reporter.ts      # генерация HTML-отчёта
-│   ├── config.ts                 # конфигурация из .env
+│   ├── config.ts                 # мердж config.json (настройки) + .env (секреты)
 │   └── index.ts                  # точка входа
 ├── reports/                      # сгенерированные отчёты (не коммитятся)
 ├── tsconfig.json
+├── config.json                   # несекретные настройки — коммитится
 ├── .env.example
-├── .env                          # секреты, не коммитится
+├── .env                          # секреты (токены), не коммитится
 ├── package.json
 └── README.md
 ```
@@ -66,27 +67,35 @@ git clone <repo>
 cd sop-drift-detector
 yarn install
 cp .env.example .env
-# заполнить .env реальными токенами и URL
+# заполнить .env реальными токенами
+# отредактировать config.json под свой Jira/GitLab/Confluence (в репозитории он уже есть с тестовыми значениями)
 ```
 
 ## Конфигурация
 
-Все переменные обязательны, кроме отмеченных как опциональные (см. `src/config.ts`).
+Настройки разделены по чувствительности: секреты — в `.env` (не коммитится), всё остальное — в `config.json` (коммитится в git, поэтому изменения настроек видны в диффах/PR).
 
-| Переменная                | Описание                                                                 |
-| ------------------------- | ------------------------------------------------------------------------- |
-| `JIRA_URL`                | Базовый URL Jira                                                          |
-| `JIRA_TOKEN`              | Personal Access Token (отправляется как `Authorization: Bearer`)          |
-| `JIRA_PROJECT_KEY`        | Ключ проекта (опционально, по умолчанию `MYCLICK`)                        |
-| `JIRA_TITLE_PREFIX`       | Обрабатывать только задачи с этим префиксом в заголовке (опционально, по умолчанию `[Back]`) |
-| `GITLAB_URL`              | Базовый URL GitLab                                                        |
-| `GITLAB_TOKEN`            | Private Token с доступом к проекту                                        |
-| `GITLAB_PROJECT_ID`       | ID проекта в GitLab                                                       |
-| `CONFLUENCE_URL`          | Базовый URL Confluence                                                    |
-| `CONFLUENCE_TOKEN`        | Personal Access Token (отправляется как `Authorization: Bearer`)          |
-| `CONFLUENCE_ROOT_PAGE_ID` | ID корневой страницы, под которой ищутся дочерние                         |
-| `ANTHROPIC_API_KEY`       | Ключ Anthropic API для LLM-анализа                                        |
-| `DAYS_BACK`               | За сколько дней назад искать задачи (опционально, по умолчанию `7`)       |
+### Секреты (`.env`)
+
+| Переменная            | Описание                                                          |
+| ---------------------- | ------------------------------------------------------------------- |
+| `JIRA_TOKEN`           | Personal Access Token (отправляется как `Authorization: Bearer`)   |
+| `GITLAB_TOKEN`         | Private Token с доступом к проекту                                 |
+| `CONFLUENCE_TOKEN`     | Personal Access Token (отправляется как `Authorization: Bearer`)   |
+| `ANTHROPIC_API_KEY`    | Ключ Anthropic API для LLM-анализа                                 |
+
+### Настройки (`config.json`)
+
+| Поле                       | Описание                                                                 |
+| --------------------------- | --------------------------------------------------------------------------- |
+| `jira.url`                  | Базовый URL Jira (обязательно)                                            |
+| `jira.projectKey`           | Ключ проекта (опционально, по умолчанию `MYCLICK`)                        |
+| `jira.titlePrefix`          | Строка или массив строк — обрабатывать только задачи, чей заголовок начинается с одного из этих префиксов, например `["[Back]", "[API]"]` (опционально, по умолчанию `[Back]`) |
+| `gitlab.url`                | Базовый URL GitLab (обязательно)                                          |
+| `gitlab.projectId`          | ID проекта в GitLab (обязательно)                                         |
+| `confluence.url`            | Базовый URL Confluence (обязательно)                                      |
+| `confluence.rootPageId`     | ID корневой страницы, под которой ищутся дочерние (обязательно)           |
+| `daysBack`                  | За сколько дней назад искать задачи (опционально, по умолчанию `7`)       |
 
 ## Запуск
 
@@ -145,8 +154,8 @@ MYCLICK-456 | Изменена логика авторизации через OT
 
 **v1.1**
 
+- ✅ Настройка через `config.json` для несекретных настроек (секреты по-прежнему в `.env`)
 - Уведомления в Telegram с дайджестом
-- Настройка через `config.json` без `.env`
 - Поддержка нескольких проектов Jira
 
 **v2.0**

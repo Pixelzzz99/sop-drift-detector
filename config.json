@@ -1,0 +1,16 @@
+{
+  "jira": {
+    "url": "https://jira.office.click.uz",
+    "projectKey": "MYCLICK",
+    "titlePrefix": "[Back]"
+  },
+  "gitlab": {
+    "url": "https://git.click.uz",
+    "projectId": 922
+  },
+  "confluence": {
+    "url": "https://confluence.office.click.uz",
+    "rootPageId": "2112421907"
+  },
+  "daysBack": 7
+}

@@ -8,7 +8,7 @@ vi.mock("../../src/config", () => ({
       url: "https://jira.example.com",
       apiToken: "jira-token",
       projectKey: "MYCLICK",
-      titlePrefix: "[Back]",
+      titlePrefixes: ["[Back]", "[API]"],
     },
     daysBack: 7,
   },
@@ -76,22 +76,23 @@ describe("JiraClient", () => {
     ]);
   });
 
-  it("keeps only issues whose title starts with the configured prefix", async () => {
+  it("keeps only issues whose title starts with one of the configured prefixes", async () => {
     mockedGet.mockResolvedValueOnce({
       data: {
         issues: [
           { key: "MYCLICK-1", fields: { summary: "[Back] Fix auth bug", status: { name: "Test" }, updated: "", labels: [], components: [] } },
-          { key: "MYCLICK-2", fields: { summary: "[iOS] Update onboarding screen", status: { name: "Test" }, updated: "", labels: [], components: [] } },
-          { key: "MYCLICK-3", fields: { summary: "[Front] Fix layout", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "MYCLICK-2", fields: { summary: "[API] Add new endpoint", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "MYCLICK-3", fields: { summary: "[iOS] Update onboarding screen", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "MYCLICK-4", fields: { summary: "[Front] Fix layout", status: { name: "Test" }, updated: "", labels: [], components: [] } },
         ],
-        total: 3,
+        total: 4,
       },
     });
 
     const client = new JiraClient();
     const issues = await client.getRecentlyClosedIssues();
 
-    expect(issues.map((i) => i.key)).toEqual(["MYCLICK-1"]);
+    expect(issues.map((i) => i.key)).toEqual(["MYCLICK-1", "MYCLICK-2"]);
   });
 
   it("paginates until all issues are fetched", async () => {
