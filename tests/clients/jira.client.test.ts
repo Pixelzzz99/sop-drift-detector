@@ -7,7 +7,7 @@ vi.mock("../../src/config", () => ({
     jira: {
       url: "https://jira.example.com",
       apiToken: "jira-token",
-      projectKey: "MYCLICK",
+      projectKeys: ["MYCLICK", "OTHERPROJ"],
       titlePrefixes: ["[Back]", "[API]"],
     },
     daysBack: 7,
@@ -23,7 +23,7 @@ describe("JiraClient", () => {
     mockedGet.mockReset();
   });
 
-  it("sends a Bearer authorization header and the expected JQL", async () => {
+  it("sends a Bearer authorization header and a JQL covering all configured projects", async () => {
     mockedGet.mockResolvedValueOnce({
       data: { issues: [], total: 0 },
     });
@@ -36,7 +36,7 @@ describe("JiraClient", () => {
       expect.objectContaining({
         headers: { Authorization: "Bearer jira-token" },
         params: expect.objectContaining({
-          jql: "project = MYCLICK AND status = Test AND updated >= -7d",
+          jql: "project in (MYCLICK, OTHERPROJ) AND status = Test AND updated >= -7d",
         }),
       }),
     );
@@ -76,14 +76,14 @@ describe("JiraClient", () => {
     ]);
   });
 
-  it("keeps only issues whose title starts with one of the configured prefixes", async () => {
+  it("keeps only issues whose title starts with one of the configured prefixes, across all configured projects", async () => {
     mockedGet.mockResolvedValueOnce({
       data: {
         issues: [
           { key: "MYCLICK-1", fields: { summary: "[Back] Fix auth bug", status: { name: "Test" }, updated: "", labels: [], components: [] } },
-          { key: "MYCLICK-2", fields: { summary: "[API] Add new endpoint", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "OTHERPROJ-7", fields: { summary: "[API] Add new endpoint", status: { name: "Test" }, updated: "", labels: [], components: [] } },
           { key: "MYCLICK-3", fields: { summary: "[iOS] Update onboarding screen", status: { name: "Test" }, updated: "", labels: [], components: [] } },
-          { key: "MYCLICK-4", fields: { summary: "[Front] Fix layout", status: { name: "Test" }, updated: "", labels: [], components: [] } },
+          { key: "OTHERPROJ-8", fields: { summary: "[Front] Fix layout", status: { name: "Test" }, updated: "", labels: [], components: [] } },
         ],
         total: 4,
       },
@@ -92,7 +92,7 @@ describe("JiraClient", () => {
     const client = new JiraClient();
     const issues = await client.getRecentlyClosedIssues();
 
-    expect(issues.map((i) => i.key)).toEqual(["MYCLICK-1", "MYCLICK-2"]);
+    expect(issues.map((i) => i.key)).toEqual(["MYCLICK-1", "OTHERPROJ-7"]);
   });
 
   it("paginates until all issues are fetched", async () => {

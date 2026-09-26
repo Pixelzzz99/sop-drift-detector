@@ -26,7 +26,7 @@ export class JiraClient {
     since.setDate(since.getDate() - config.daysBack);
 
     const jql = [
-      `project = ${config.jira.projectKey}`,
+      `project in (${config.jira.projectKeys.join(", ")})`,
       `status = Test`,
       `updated >= -${config.daysBack}d`,
     ].join(" AND ");
