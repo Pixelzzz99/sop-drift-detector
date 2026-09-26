@@ -33,7 +33,7 @@ function requiredJson<T = any>(json: Record<string, any>, keyPath: string): T {
     return value as T;
 }
 
-function normalizePrefixes(value: unknown, fallback: string[]): string[] {
+function normalizeStringArray(value: unknown, fallback: string[]): string[] {
     if (Array.isArray(value) && value.length > 0) return value;
     if (typeof value === 'string' && value) return [value];
     return fallback;
@@ -45,8 +45,8 @@ export const config = {
     jira: {
         url: requiredJson<string>(json, 'jira.url'),
         apiToken: required("JIRA_TOKEN"),
-        projectKey: json.jira?.projectKey || "MYCLICK",
-        titlePrefixes: normalizePrefixes(json.jira?.titlePrefix, ["[Back]"]),
+        projectKeys: normalizeStringArray(json.jira?.projectKey, ["MYCLICK"]),
+        titlePrefixes: normalizeStringArray(json.jira?.titlePrefix, ["[Back]"]),
     },
     gitlab: {
         url: requiredJson<string>(json, 'gitlab.url'),

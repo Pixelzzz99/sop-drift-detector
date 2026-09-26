@@ -46,7 +46,7 @@ describe("config", () => {
       jira: {
         url: "https://jira.example.com",
         apiToken: "jira-token",
-        projectKey: "MYCLICK",
+        projectKeys: ["MYCLICK"],
         titlePrefixes: ["[Back]"],
       },
       gitlab: {
@@ -112,7 +112,7 @@ describe("config", () => {
 
     const { config } = await import("../src/config");
 
-    expect(config.jira.projectKey).toBe("MYCLICK");
+    expect(config.jira.projectKeys).toEqual(["MYCLICK"]);
     expect(config.jira.titlePrefixes).toEqual(["[Back]"]);
     expect(config.daysBack).toBe(7);
   });
@@ -127,5 +127,17 @@ describe("config", () => {
     const { config } = await import("../src/config");
 
     expect(config.jira.titlePrefixes).toEqual(["[Back]", "[API]"]);
+  });
+
+  it("accepts an array of project keys in config.json", async () => {
+    setSecretEnv();
+    mockConfigFile({
+      ...validConfigJson,
+      jira: { ...validConfigJson.jira, projectKey: ["MYCLICK", "OTHERPROJ"] },
+    });
+
+    const { config } = await import("../src/config");
+
+    expect(config.jira.projectKeys).toEqual(["MYCLICK", "OTHERPROJ"]);
   });
 });
