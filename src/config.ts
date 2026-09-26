@@ -52,6 +52,7 @@ export const config = {
         url: requiredJson<string>(json, 'gitlab.url'),
         apiToken: required("GITLAB_TOKEN"),
         projectId: parseInt(String(requiredJson(json, 'gitlab.projectId')), 10),
+        mrLookbackDays: parseInt(json.gitlab?.mrLookbackDays, 10) || 60,
     },
     confluence: {
         url: requiredJson<string>(json, 'confluence.url'),

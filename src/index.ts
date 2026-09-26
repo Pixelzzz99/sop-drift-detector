@@ -5,6 +5,7 @@ import { DiffAnalysis, DiffAnalyzer } from "./analyzers/diff.analyzer";
 import { MatchedPage, Matcher } from "./analyzers/matcher";
 import { SemanticMatcher } from "./analyzers/semantic.matcher";
 import { HtmlReporter } from "./reporters/html.reporter";
+import { config } from "./config";
 
 export interface ReportEntity {
   issue: JiraIssue;
@@ -51,6 +52,7 @@ async function main() {
   }
 
   const confluencePages = await confluence.getAllPagesUnderRoot();
+  const allMergeRequests = await gitlab.getMergedMRsSince(config.gitlab.mrLookbackDays);
 
   const entries: ReportEntity[] = [];
 
@@ -60,7 +62,7 @@ async function main() {
       `\n[${i + 1}/${issues.length}] Processing ${issue.key}: ${issue.summary}`,
     );
 
-    const mergeRequests = await gitlab.findMergedMRsByIssueKey(issue.key);
+    const mergeRequests = gitlab.matchIssueToMRs(allMergeRequests, issue.key);
     console.log(` -> Found ${mergeRequests.length} MR(s)`);
 
     let analysis: DiffAnalysis | null = null;
