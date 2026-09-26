@@ -53,6 +53,7 @@ describe("config", () => {
         url: "https://gitlab.example.com",
         apiToken: "gitlab-token",
         projectId: 42,
+        mrLookbackDays: 60,
       },
       confluence: {
         url: "https://confluence.example.com",
@@ -114,6 +115,7 @@ describe("config", () => {
 
     expect(config.jira.projectKeys).toEqual(["MYCLICK"]);
     expect(config.jira.titlePrefixes).toEqual(["[Back]"]);
+    expect(config.gitlab.mrLookbackDays).toBe(60);
     expect(config.daysBack).toBe(7);
   });
 
@@ -127,6 +129,18 @@ describe("config", () => {
     const { config } = await import("../src/config");
 
     expect(config.jira.titlePrefixes).toEqual(["[Back]", "[API]"]);
+  });
+
+  it("respects an explicit gitlab.mrLookbackDays in config.json", async () => {
+    setSecretEnv();
+    mockConfigFile({
+      ...validConfigJson,
+      gitlab: { ...validConfigJson.gitlab, mrLookbackDays: 90 },
+    });
+
+    const { config } = await import("../src/config");
+
+    expect(config.gitlab.mrLookbackDays).toBe(90);
   });
 
   it("accepts an array of project keys in config.json", async () => {

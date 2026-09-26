@@ -6,9 +6,9 @@ export interface MergeRequest {
   iid: number;
   title: string;
   description: string;
+  sourceBranch: string;
   mergedAt: string;
   webUrl: string;
-  issueKey: string;
 }
 
 export interface FileDiff {
@@ -32,32 +32,65 @@ export class GitLabClient {
     };
   }
 
-  async findMergedMRsByIssueKey(issueKey: string): Promise<MergeRequest[]> {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/api/v4/projects/${this.projectId}/merge_requests`,
-        {
-          headers: this.headers,
-          params: {
-            state: "merged",
-            search: issueKey,
-            per_page: 10,
-          },
-        },
-      );
+  async getMergedMRsSince(daysBack: number): Promise<MergeRequest[]> {
+    const since = new Date();
+    since.setDate(since.getDate() - daysBack);
 
-      return response.data.map((mr: any) => ({
-        id: mr.id,
-        iid: mr.iid,
-        title: mr.title,
-        description: mr.description || "",
-        mergedAt: mr.merged_at,
-        webUrl: mr.web_url,
-        issueKey,
-      }));
+    console.log(
+      `[GitLab] Fetching merge requests merged since ${since.toISOString()} (${daysBack}d)`,
+    );
+
+    try {
+      const mrs: MergeRequest[] = [];
+      let page = 1;
+      const perPage = 100;
+
+      while (true) {
+        const response = await axios.get(
+          `${this.baseUrl}/api/v4/projects/${this.projectId}/merge_requests`,
+          {
+            headers: this.headers,
+            params: {
+              state: "merged",
+              merged_after: since.toISOString(),
+              per_page: perPage,
+              page,
+            },
+          },
+        );
+
+        for (const mr of response.data) {
+          mrs.push({
+            id: mr.id,
+            iid: mr.iid,
+            title: mr.title,
+            description: mr.description || "",
+            sourceBranch: mr.source_branch || "",
+            mergedAt: mr.merged_at,
+            webUrl: mr.web_url,
+          });
+        }
+
+        if (response.data.length < perPage) break;
+        page += 1;
+      }
+
+      console.log(`[GitLab] Found ${mrs.length} merged MR(s)`);
+      return mrs;
     } catch {
       return [];
     }
+  }
+
+  matchIssueToMRs(mrs: MergeRequest[], issueKey: string): MergeRequest[] {
+    const key = issueKey.toLowerCase();
+
+    return mrs.filter(
+      (mr) =>
+        mr.title.toLowerCase().includes(key) ||
+        mr.description.toLowerCase().includes(key) ||
+        mr.sourceBranch.toLowerCase().includes(key),
+    );
   }
 
   async getMRDiffs(mrIid: number): Promise<FileDiff[]> {

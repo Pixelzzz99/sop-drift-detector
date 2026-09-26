@@ -6,7 +6,8 @@
   },
   "gitlab": {
     "url": "https://git.click.uz",
-    "projectId": 922
+    "projectId": 922,
+    "mrLookbackDays": 60
   },
   "confluence": {
     "url": "https://confluence.office.click.uz",
